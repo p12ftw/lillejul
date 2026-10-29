@@ -49,6 +49,11 @@ Varje push till `main` publiceras automatiskt.
    - **Rätt svar** visas när alla har svarat eller tiden är slut. Sedan kommer **Nästa fråga**.
 5. **Topplistan** visas bara vid halvtid (quiz med minst 3 frågor). Efter sista frågan visas pallen.
 6. **Mellanslag, Enter eller →** gör alltid nästa steg, så en presenter-klicker fungerar också.
+   **M** slår av och på musiken.
+
+### Musik
+Storskärmen spelar väntmusik i lobbyn, vid halvtid och på slutet, och frågemusik medan deltagarna svarar. Den tickar också de sista fem sekunderna. Utan egna filer spelas inbyggd, egenkomponerad julmusik. Egna MP3:or laddar du upp per quiz i admin under 🎵 Musik.
+Webbläsare spelar inte ljud förrän man klickat eller tryckt på en tangent, så musiken startar vid första klicket eller mellanslaget på storskärmen. Musikknappen blinkar tills dess.
 7. Tryck **Stäng och radera omgången** när ni är klara.
 
 Laddar någon om sidan eller låser mobilen hamnar de där de var.

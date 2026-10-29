@@ -1,5 +1,16 @@
 import { sb, $, $$, esc, nl2br, LETTERS, errMsg, sizeClass, syncClock, remainingMs, letItSnow, QUIZ_NAME, setTitle } from './lib.js';
 setTitle('storskärm');
+import { Music } from './music.js';
+
+const music = new Music();
+music.onChange = renderMusicBtn;
+function renderMusicBtn() {
+  const b = document.getElementById('musicBtn');
+  if (!b) return;
+  const st = music.state;
+  b.textContent = st === 'muted' ? '🔇 Musik av' : st === 'blocked' ? '🔊 Klicka för musik' : '🔊 Musik';
+  b.classList.toggle('pulse', st === 'blocked');
+}
 
 const app = $('#app');
 const gameId = new URLSearchParams(location.search).get('game');
@@ -17,6 +28,7 @@ init();
 
 // Mellanslag / Enter / pil höger = klicka på sidans huvudknapp (funkar med presenter-klicker)
 document.addEventListener('keydown', e => {
+  if (e.code === 'KeyM' && !e.target.closest?.('input, textarea, select')) { music.toggle(); return; }
   if (!['Space', 'Enter', 'ArrowRight', 'PageDown'].includes(e.code)) return;
   if (e.target.closest?.('input, textarea, select')) return;
   const btn = $('[data-primary]');
@@ -32,6 +44,8 @@ async function init() {
   const { data, error } = await sb.from('games').select('*').eq('id', gameId).maybeSingle();
   if (error || !data) return showGone();
   setGame(data);
+  const { data: quiz } = await sb.from('quizzes').select('lobby_music_url, question_music_url').eq('id', data.quiz_id).maybeSingle();
+  music.setUrls({ lobby: quiz?.lobby_music_url, question: quiz?.question_music_url });
 }
 
 async function loadPlayers() {
@@ -55,6 +69,10 @@ function setGame(g) {
   game = g;
   stopLoops();
   revealSent = false;
+  const prev = music.mode;
+  music.play({ lobby: 'lobby', question: 'question', finished: 'lobby' }[g.status] || null);
+  if (g.status === 'reveal' && prev === 'question') music.fx('reveal');
+  if (g.status === 'finished') music.fx('fanfare');
   if (g.status === 'lobby') showLobby();
   else if (g.status === 'intro') showIntro();
   else if (g.status === 'question') showQuestion();
@@ -67,12 +85,15 @@ const header = (extra = '') => `
     <div style="font-size:1.3rem;font-weight:600">${extra}</div>
     <div class="actions">
       <span class="muted" style="align-self:center">PIN <strong style="color:#fff">${esc(game.pin)}</strong></span>
+      <button class="btn ghost small" id="musicBtn" title="Musik på/av (M)">🔊 Musik</button>
       <button class="btn ghost small" id="endBtn">Avsluta</button>
     </div>
   </div>`;
 
 function wireEnd() {
   $('#endBtn')?.addEventListener('click', endGame);
+  $('#musicBtn')?.addEventListener('click', e => { e.currentTarget.blur(); if (Date.now() - (music.unlockedAt || 0) < 1500) return; music.toggle(); });
+  renderMusicBtn();
 }
 async function endGame() {
   if (!confirm('Avsluta quizet? Alla deltagare och resultat raderas.')) return;
@@ -180,6 +201,7 @@ function showQuestion() {
   $('#skip').onclick = () => doReveal(true);
 
   let answered = 0;
+  let lastSec = null;
   loadPlayers();
 
   every(async () => {
@@ -195,7 +217,10 @@ function showQuestion() {
   every(() => {
     const ms = remainingMs(game);
     const secs = $('#secs'); if (!secs) return;
-    secs.textContent = Math.ceil(ms / 1000);
+    const sec = Math.ceil(ms / 1000);
+    if (sec !== lastSec && sec > 0 && sec <= 5) music.fx('tick');
+    lastSec = sec;
+    secs.textContent = sec;
     $('#ring').style.setProperty('--p', ms / (q.time_limit * 1000));
     if (ms <= 0) setTimeout(doReveal, 600);   // liten marginal för sista svaren
   }, 200);
@@ -235,6 +260,7 @@ function isHalfway(index) {
 }
 
 async function showLeaderboard() {
+  music.play('lobby');
   const { data } = await sb.from('players').select('name, score').eq('game_id', gameId)
     .order('score', { ascending: false }).limit(5);
   app.innerHTML = `

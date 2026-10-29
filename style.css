@@ -212,3 +212,9 @@ body.admin .btn:not(.ghost) { background: var(--ca); color: #fff; }
 .host .intro .qtext.len-l { font-size: clamp(1.6rem, 2.8vw, 2.5rem); }
 .host .intro .qtext.len-xl { font-size: clamp(1.25rem, 2.1vw, 1.9rem); }
 .host .intro .qimg { max-height: 45vh; border-radius: 14px; }
+
+/* Musikknappen blinkar när webbläsaren väntar på ett klick */
+.btn.pulse { animation: pulse 1.2s ease-in-out infinite; border-color: var(--accent); }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(244,196,48,.35); } }
+.musiccard { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 12px; margin-bottom: 14px; }
+.musiccard .qhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }

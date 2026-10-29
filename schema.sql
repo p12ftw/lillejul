@@ -30,6 +30,8 @@ create table public.quizzes (
   id          uuid primary key default gen_random_uuid(),
   owner       uuid not null default auth.uid() references auth.users(id) on delete cascade,
   title       text not null default 'Nytt quiz',
+  lobby_music_url     text,   -- egen väntmusik (annars inbyggd)
+  question_music_url  text,   -- egen frågemusik (annars inbyggd)
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

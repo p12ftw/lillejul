@@ -133,6 +133,7 @@ async function showEditor(id) {
         </div>
       </div>
       <input class="title-input" id="title" value="${esc(quiz.title)}" placeholder="Quizets namn">
+      <div class="musiccard" id="music"></div>
       <div class="list" id="qs"></div>
       <button class="btn ghost" id="add" style="width:100%;margin-top:14px">+ Lägg till fråga</button>
     </div>`;
@@ -147,6 +148,7 @@ async function showEditor(id) {
   $('#title').oninput = e => debounce('title', () =>
     trackSave(sb.from('quizzes').update({ title: e.target.value || 'Namnlöst quiz', updated_at: new Date().toISOString() }).eq('id', quiz.id)));
   $('#add').onclick = addQuestion;
+  renderMusic();
 
   renderQuestions();
   if (!questions.length) addQuestion();
@@ -302,4 +304,56 @@ function removeStoredImage(url) {
   const marker = '/quiz-images/';
   const i = url?.indexOf(marker);
   if (i > -1) sb.storage.from('quiz-images').remove([decodeURIComponent(url.slice(i + marker.length))]);
+}
+
+
+// ---------------- Musik ----------------
+const MUSIC = [
+  ['lobby_music_url', 'Väntmusik', 'lobby, halvtid och slutresultat'],
+  ['question_music_url', 'Frågemusik', 'medan deltagarna svarar'],
+];
+
+function renderMusic() {
+  const box = $('#music');
+  box.innerHTML = `
+    <div class="qhead"><strong>🎵 Musik på storskärmen</strong>
+      <span class="muted" style="font-size:.9rem">Utan egen fil spelas inbyggd julmusik</span></div>
+    ${MUSIC.map(([col, label, hint]) => `
+      <div class="imgrow" data-col="${col}">
+        <div style="min-width:170px"><strong>${label}</strong><div class="muted" style="font-size:.85rem">${hint}</div></div>
+        ${quiz[col]
+          ? `<audio controls preload="none" src="${esc(quiz[col])}" style="height:36px;max-width:100%"></audio>
+             <button class="btn ghost small" data-act="rm">Ta bort</button>`
+          : `<label class="btn ghost small">⬆ Ladda upp MP3<input type="file" accept="audio/*" hidden></label>
+             <span class="muted">🎄 Inbyggd julmusik</span>`}
+        <span class="muted" data-status></span>
+      </div>`).join('')}`;
+
+  $$('[data-col]', box).forEach(row => {
+    const col = row.dataset.col;
+    const status = $('[data-status]', row);
+    $('input[type=file]', row)?.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 20 * 1024 * 1024) { status.textContent = '⚠ Filen är större än 20 MB'; return; }
+      status.textContent = 'Laddar upp …';
+      const ext = (file.name.split('.').pop() || 'mp3').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const path = `${quiz.id}/music-${crypto.randomUUID()}.${ext}`;
+      const { error } = await sb.storage.from('quiz-images').upload(path, file, { contentType: file.type || 'audio/mpeg' });
+      if (error) { status.textContent = '⚠ ' + errMsg(error); return; }
+      const url = sb.storage.from('quiz-images').getPublicUrl(path).data.publicUrl;
+      const r = await trackSave(sb.from('quizzes').update({ [col]: url }).eq('id', quiz.id));
+      if (r.error) { status.textContent = '⚠ ' + errMsg(r.error); return; }
+      quiz[col] = url;
+      renderMusic();
+    });
+    $('[data-act="rm"]', row)?.addEventListener('click', async () => {
+      const old = quiz[col];
+      const r = await trackSave(sb.from('quizzes').update({ [col]: null }).eq('id', quiz.id));
+      if (r.error) return;
+      removeStoredImage(old);
+      quiz[col] = null;
+      renderMusic();
+    });
+  });
 }
