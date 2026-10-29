@@ -1,5 +1,8 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, QUIZ_NAME } from './config.js';
+
+export { QUIZ_NAME };
+export const setTitle = sub => { document.title = sub ? `${QUIZ_NAME} – ${sub}` : QUIZ_NAME; };
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

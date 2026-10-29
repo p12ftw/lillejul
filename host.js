@@ -1,4 +1,5 @@
-import { sb, $, $$, esc, nl2br, LETTERS, errMsg, sizeClass, syncClock, remainingMs, letItSnow } from './lib.js';
+import { sb, $, $$, esc, nl2br, LETTERS, errMsg, sizeClass, syncClock, remainingMs, letItSnow, QUIZ_NAME, setTitle } from './lib.js';
+setTitle('storskärm');
 
 const app = $('#app');
 const gameId = new URLSearchParams(location.search).get('game');
@@ -88,7 +89,8 @@ function showLobby() {
 
   app.innerHTML = `
     <div class="host">
-      ${header('<span class="logo" style="font-size:2.4rem">Julquiz 🎄</span>')}
+      ${header('')}
+      <h1 class="logo" style="font-size:clamp(3rem,7vw,6rem);text-align:center;margin:-10px 0 0">${esc(QUIZ_NAME)} 🎄</h1>
       <div class="joinbox">
         <div>
           <div class="muted" style="font-size:1.3rem">Gå till <strong style="color:#fff">${esc(joinUrl.replace(/^https?:\/\//, ''))}</strong> och ange PIN:</div>
@@ -265,7 +267,7 @@ async function showFinished() {
     </div>` : '';
   app.innerHTML = `
     <div class="host">
-      ${header('<span class="logo" style="font-size:2.4rem">Årets julquizmästare 🎅</span>')}
+      ${header(`<span class="logo" style="font-size:2.4rem">${esc(QUIZ_NAME)} – vinnare 🎅</span>`)}
       <div class="podium">${step(all[1], 2)}${step(all[0], 1)}${step(all[2], 3)}</div>
       <div class="board">
         ${all.slice(3).map((p, i) => `

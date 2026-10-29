@@ -1,4 +1,5 @@
-import { sb, $, $$, esc, nl2br, LETTERS, errMsg, sizeClass, syncClock, remainingMs, watchGame, letItSnow } from './lib.js';
+import { sb, $, $$, esc, nl2br, LETTERS, errMsg, sizeClass, syncClock, remainingMs, watchGame, letItSnow, QUIZ_NAME, setTitle } from './lib.js';
+setTitle();
 
 const app = $('#app');
 const STORE = 'quiz-player';
@@ -43,7 +44,7 @@ function showJoin(message = '') {
     <div class="center">
       <form class="panel" id="join" autocomplete="off">
         <div class="garland"></div>
-        <p class="logo">Julquiz 🎄</p>
+        <p class="logo">${esc(QUIZ_NAME)} 🎄</p>
         <p class="muted">Ange PIN-koden från skärmen och ditt namn</p>
         <input class="field" id="pin" inputmode="numeric" maxlength="6" placeholder="PIN-kod" value="${esc(urlPin)}">
         <input class="field" id="name" maxlength="30" placeholder="Ditt namn" autocapitalize="words">
@@ -104,7 +105,7 @@ function showLobby() {
       <div class="result">
         <div style="font-size:4rem">🎄</div>
         <p class="big">Du är med!</p>
-        <p class="muted" style="font-size:1.2rem">Leta upp ditt namn på skärmen.<br>Julquizet startar snart …</p>
+        <p class="muted" style="font-size:1.2rem">Leta upp ditt namn på skärmen.<br>${esc(QUIZ_NAME)} startar snart …</p>
         <div class="spinner" style="margin-top:20px"></div>
       </div>
     </div>`;
@@ -243,7 +244,7 @@ function showEnded() {
       <div class="panel">
         <div class="garland"></div>
         <h1>God jul! 🎅</h1>
-        <p class="muted">Julquizet är avslutat – tack för att du var med!</p>
+        <p class="muted">${esc(QUIZ_NAME)} är avslutat – tack för att du var med!</p>
         <button class="btn" id="again" style="margin-top:12px">Gå med i ett nytt quiz</button>
       </div>
     </div>`;

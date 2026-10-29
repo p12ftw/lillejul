@@ -1,4 +1,4 @@
-# 🎄 Julquiz – eget Kahoot utan teckengränser
+# 🎄 Lillejul Mega Quiz – eget Kahoot utan teckengränser
 
 Tre sidor:
 
@@ -70,7 +70,7 @@ index.html  player.js   – deltagare
 admin.html  admin.js    – skapa quiz
 host.html   host.js     – storskärm
 lib.js, style.css       – delat
-config.js               – dina Supabase-uppgifter
+config.js               – Supabase-uppgifter och quizets namn (QUIZ_NAME)
 schema.sql              – databas, regler och spellogik (bara första installationen)
-migrations/             – uppdateringar att köra i Supabase vid nya versioner
+migrations/             – uppdateringar att köra i Supabase + exempelquiz med 10 julfrågor
 ```

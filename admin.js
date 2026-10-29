@@ -1,4 +1,5 @@
-import { sb, $, $$, esc, LETTERS, errMsg, shrinkImage } from './lib.js';
+import { sb, $, $$, esc, LETTERS, errMsg, shrinkImage, QUIZ_NAME, setTitle } from './lib.js';
+setTitle('admin');
 
 const app = $('#app');
 const TIMES = [5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240];
@@ -22,7 +23,7 @@ function showLogin() {
   app.innerHTML = `
     <div class="center">
       <form class="panel" id="login">
-        <h1>Julquiz 🎄</h1>
+        <h1>${esc(QUIZ_NAME)} 🎄</h1>
         <p class="muted">Logga in för att skapa och starta quiz</p>
         <input class="field" type="email" id="email" placeholder="E-post" autocomplete="username" required>
         <input class="field" type="password" id="pw" placeholder="Lösenord" autocomplete="current-password" required>
@@ -43,7 +44,7 @@ async function showList() {
   app.innerHTML = `
     <div class="wrap">
       <div class="adm-head">
-        <h1>Mina julquiz 🎄</h1>
+        <h1>${esc(QUIZ_NAME)} 🎄</h1>
         <div class="actions">
           <button class="btn ghost small" id="logout">Logga ut</button>
           <button class="btn small" id="new">+ Nytt quiz</button>
