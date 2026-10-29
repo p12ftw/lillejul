@@ -1,13 +1,15 @@
 -- =====================================================================
 --  Quiz-app – Supabase-schema
 --  Kör hela filen i Supabase: SQL Editor -> New query -> klistra in -> Run
---  Filen kan köras om (den tar bort och skapar om allt den äger).
+--  OBS: Filen är till för FÖRSTA installationen. Kör du om den raderas
+--  alla quiz och frågor. Uppdateringar finns i mappen migrations/.
 -- =====================================================================
 
 -- ---------- Städa (gör filen omkörbar) ----------
 drop function if exists public.server_time();
 drop function if exists public.create_game(uuid);
 drop function if exists public.next_question(uuid);
+drop function if exists public.show_options(uuid);
 drop function if exists public.reveal_answer(uuid);
 drop function if exists public.end_game(uuid);
 drop function if exists public.kick_player(uuid);
@@ -53,7 +55,7 @@ create table public.games (
   quiz_id              uuid not null references public.quizzes(id) on delete cascade,
   host                 uuid not null default auth.uid(),
   status               text not null default 'lobby'
-                       check (status in ('lobby','question','reveal','finished')),
+                       check (status in ('lobby','intro','question','reveal','finished')),
   current_index        int  not null default -1,
   total_questions      int  not null default 0,
   current_question_id  uuid,
@@ -153,7 +155,8 @@ begin
   return g;
 end $$;
 
--- VÄRD: gå till nästa fråga (eller avsluta när frågorna är slut)
+-- VÄRD: gå till nästa fråga (eller avsluta när frågorna är slut).
+-- Frågan visas först utan svarsalternativ (status 'intro').
 create function public.next_question(p_game_id uuid) returns public.games
 language plpgsql security definer set search_path = public as $$
 declare g games; q questions;
@@ -172,17 +175,35 @@ begin
   end if;
 
   update games set
-    status              = 'question',
+    status              = 'intro',
     current_index       = g.current_index + 1,
     current_question_id = q.id,
-    question_started_at = clock_timestamp(),
+    question_started_at = null,
     reveal              = null,
     current_question    = jsonb_build_object(
       'index',      g.current_index + 1,
       'text',       q.text,
       'image_url',  q.image_url,
-      'options',    to_jsonb(q.options),
       'time_limit', q.time_limit)
+  where id = g.id returning * into g;
+  return g;
+end $$;
+
+-- VÄRD: visa svarsalternativen och starta klockan
+create function public.show_options(p_game_id uuid) returns public.games
+language plpgsql security definer set search_path = public as $$
+declare g games; q questions;
+begin
+  select * into g from games where id = p_game_id and host = auth.uid() for update;
+  if not found then raise exception 'Inte behörig'; end if;
+  if g.status <> 'intro' then return g; end if;
+  select * into q from questions where id = g.current_question_id;
+  update games set
+    status              = 'question',
+    question_started_at = clock_timestamp(),
+    current_question    = g.current_question || jsonb_build_object(
+      'options',    to_jsonb(coalesce(q.options, array['','','',''])),
+      'time_limit', coalesce(q.time_limit, (g.current_question->>'time_limit')::int))
   where id = g.id returning * into g;
   return g;
 end $$;
@@ -332,13 +353,13 @@ begin
     'players',  v_total);
 end $$;
 
-revoke all on function public.create_game(uuid), public.next_question(uuid), public.reveal_answer(uuid),
+revoke all on function public.create_game(uuid), public.next_question(uuid), public.show_options(uuid), public.reveal_answer(uuid),
                        public.end_game(uuid), public.kick_player(uuid), public.join_game(text, text),
                        public.submit_answer(uuid, uuid, int), public.my_result(uuid, uuid)
   from public, anon, authenticated;
 grant execute on function public.server_time() to anon, authenticated;
-grant execute on function public.create_game(uuid), public.next_question(uuid), public.reveal_answer(uuid),
-                          public.end_game(uuid), public.kick_player(uuid)
+grant execute on function public.create_game(uuid), public.next_question(uuid), public.show_options(uuid),
+                          public.reveal_answer(uuid), public.end_game(uuid), public.kick_player(uuid)
   to authenticated;
 grant execute on function public.join_game(text, text), public.submit_answer(uuid, uuid, int),
                           public.my_result(uuid, uuid)

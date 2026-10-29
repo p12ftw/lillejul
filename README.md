@@ -43,8 +43,13 @@ Varje push till `main` publiceras automatiskt.
 1. Öppna `admin.html` på datorn som är kopplad till TV:n och tryck **▶ Starta** på ditt quiz.
 2. Deltagarna skannar QR-koden eller går till adressen och skriver PIN-koden.
 3. Ett olämpligt namn tar du bort genom att klicka på det i lobbyn.
-4. Tryck **Starta quiz**. Efter varje fråga visas rätt svar, sedan **Topplista** och sedan **Nästa fråga**.
-5. Efter sista frågan visas pallen. Tryck **Stäng och radera omgången**.
+4. Tryck **Starta quiz**. Varje fråga går i tre steg:
+   - **Frågan** visas ensam, så att alla hinner läsa (eller du läser högt).
+   - **Visa svarsalternativ**: alternativen dyker upp och klockan startar.
+   - **Rätt svar** visas när alla har svarat eller tiden är slut. Sedan kommer **Nästa fråga**.
+5. **Topplistan** visas bara vid halvtid (quiz med minst 3 frågor). Efter sista frågan visas pallen.
+6. **Mellanslag, Enter eller →** gör alltid nästa steg, så en presenter-klicker fungerar också.
+7. Tryck **Stäng och radera omgången** när ni är klara.
 
 Laddar någon om sidan eller låser mobilen hamnar de där de var.
 
@@ -66,5 +71,6 @@ admin.html  admin.js    – skapa quiz
 host.html   host.js     – storskärm
 lib.js, style.css       – delat
 config.js               – dina Supabase-uppgifter
-schema.sql              – databas, regler och spellogik
+schema.sql              – databas, regler och spellogik (bara första installationen)
+migrations/             – uppdateringar att köra i Supabase vid nya versioner
 ```

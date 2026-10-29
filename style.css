@@ -203,3 +203,12 @@ main { position: relative; z-index: 1; }
 body.admin { --ca: #d7263d; }
 body.admin .adm-head h1, body.admin .title-input { font-family: 'Outfit', sans-serif; }
 body.admin .btn:not(.ghost) { background: var(--ca); color: #fff; }
+
+/* Frågan visas först */
+.host .intro { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 24px; }
+.host .intro .qtext { width: 100%; }
+.host .intro .qtext.len-s { font-size: clamp(2.4rem, 5vw, 4.4rem); }
+.host .intro .qtext.len-m { font-size: clamp(2rem, 3.8vw, 3.4rem); }
+.host .intro .qtext.len-l { font-size: clamp(1.6rem, 2.8vw, 2.5rem); }
+.host .intro .qtext.len-xl { font-size: clamp(1.25rem, 2.1vw, 1.9rem); }
+.host .intro .qimg { max-height: 45vh; border-radius: 14px; }

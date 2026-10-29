@@ -14,6 +14,14 @@ const every = (fn, ms) => { fn(); loops.push(setInterval(fn, ms)); };
 
 init();
 
+// Mellanslag / Enter / pil höger = klicka på sidans huvudknapp (funkar med presenter-klicker)
+document.addEventListener('keydown', e => {
+  if (!['Space', 'Enter', 'ArrowRight', 'PageDown'].includes(e.code)) return;
+  if (e.target.closest?.('input, textarea, select')) return;
+  const btn = $('[data-primary]');
+  if (btn && !btn.disabled) { e.preventDefault(); btn.click(); }
+});
+
 async function init() {
   letItSnow(48);
   const { data: { session } } = await sb.auth.getSession();
@@ -47,6 +55,7 @@ function setGame(g) {
   stopLoops();
   revealSent = false;
   if (g.status === 'lobby') showLobby();
+  else if (g.status === 'intro') showIntro();
   else if (g.status === 'question') showQuestion();
   else if (g.status === 'reveal') showReveal();
   else if (g.status === 'finished') showFinished();
@@ -90,7 +99,7 @@ function showLobby() {
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <div class="stat" style="text-align:left"><span id="pcount">0</span><small>deltagare (klicka på ett namn för att ta bort)</small></div>
-        <button class="btn" id="startBtn" disabled style="font-size:1.4rem;padding:18px 34px">Starta quiz ▶</button>
+        <button class="btn" id="startBtn" data-primary disabled style="font-size:1.4rem;padding:18px 34px">Starta quiz ▶</button>
       </div>
       <div class="chips" id="chips"></div>
     </div>`;
@@ -118,6 +127,25 @@ function showLobby() {
   every(renderChips, 1500);
 }
 
+// ---------------- Frågan visas (utan alternativ) ----------------
+function showIntro() {
+  const q = game.current_question;
+  app.innerHTML = `
+    <div class="host">
+      ${header(`Fråga ${q.index + 1} av ${game.total_questions}`)}
+      <div class="intro">
+        <div class="qtext ${sizeClass(q.text)}">${nl2br(q.text)}</div>
+        ${q.image_url ? `<img class="qimg" src="${esc(q.image_url)}" alt="">` : ''}
+      </div>
+      <div style="text-align:center">
+        <button class="btn" data-primary id="showOpts" style="font-size:1.4rem;padding:18px 34px">Visa svarsalternativ ▶</button>
+        <p class="muted" style="margin:10px 0 0">Klockan (${q.time_limit} sek) startar när alternativen visas · mellanslag = nästa</p>
+      </div>
+    </div>`;
+  wireEnd();
+  $('#showOpts').onclick = () => act('show_options');
+}
+
 // ---------------- Fråga ----------------
 function optionsHtml(q, reveal) {
   return q.options.map((t, i) => {
@@ -142,7 +170,7 @@ function showQuestion() {
         <div><div class="ring" id="ring"><span id="secs"></span></div></div>
         ${q.image_url ? `<img class="qimg" src="${esc(q.image_url)}" alt="">` : '<div></div>'}
         <div class="stat"><span id="answered">0</span><small>svar</small>
-          <button class="btn ghost small" id="skip" style="margin-top:14px">Visa svar</button></div>
+          <button class="btn ghost small" id="skip" data-primary style="margin-top:14px">Visa svar</button></div>
       </div>
       <div class="opts">${optionsHtml(q)}</div>
     </div>`;
@@ -181,6 +209,8 @@ function doReveal(force = false) {
 function showReveal() {
   const q = game.current_question;
   const last = q.index + 1 >= game.total_questions;
+  const half = isHalfway(q.index);
+  const nextLabel = last ? 'Visa slutresultat 🏆' : half ? 'Halvtid – topplista 🎁' : 'Nästa fråga ▶';
   app.innerHTML = `
     <div class="host">
       ${header(`Fråga ${q.index + 1} av ${game.total_questions}`)}
@@ -188,20 +218,26 @@ function showReveal() {
       <div class="mid">
         <div class="stat">${game.reveal?.answered ?? 0}<small>svarade</small></div>
         ${q.image_url ? `<img class="qimg" src="${esc(q.image_url)}" alt="">` : '<div></div>'}
-        <div style="text-align:center"><button class="btn" id="board">Topplista →</button></div>
+        <div style="text-align:center"><button class="btn" id="board" data-primary>${nextLabel}</button></div>
       </div>
       <div class="opts">${optionsHtml(q, game.reveal)}</div>
     </div>`;
   wireEnd();
-  $('#board').onclick = () => showLeaderboard(last);
+  $('#board').onclick = () => (half ? showLeaderboard() : act('next_question'));
 }
 
-async function showLeaderboard(last) {
+/** Topplista efter halva quizet (bara om quizet har minst 3 frågor). */
+function isHalfway(index) {
+  const n = game.total_questions;
+  return n >= 3 && index === Math.ceil(n / 2) - 1;
+}
+
+async function showLeaderboard() {
   const { data } = await sb.from('players').select('name, score').eq('game_id', gameId)
     .order('score', { ascending: false }).limit(5);
   app.innerHTML = `
     <div class="host">
-      ${header('Topplista 🎁')}
+      ${header('<span class="logo" style="font-size:2.4rem">Halvtid! 🎁</span>')}
       <div class="board">
         ${(data || []).map((p, i) => `
           <div class="row ${i === 0 ? 'first' : ''}">
@@ -209,7 +245,7 @@ async function showLeaderboard(last) {
           </div>`).join('') || '<p class="muted" style="text-align:center">Inga deltagare</p>'}
       </div>
       <div style="text-align:center;margin-top:auto">
-        <button class="btn" id="next" style="font-size:1.4rem;padding:18px 34px">${last ? 'Visa slutresultat 🏆' : 'Nästa fråga ▶'}</button>
+        <button class="btn" id="next" data-primary style="font-size:1.4rem;padding:18px 34px">Nästa fråga ▶</button>
       </div>
     </div>`;
   wireEnd();

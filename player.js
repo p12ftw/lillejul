@@ -88,6 +88,7 @@ function onGame(g) {
   viewKey = key;
   clearInterval(tick);
   if (g.status === 'lobby') showLobby();
+  else if (g.status === 'intro') showIntro();
   else if (g.status === 'question') showQuestion();
   else if (g.status === 'reveal') showReveal();
   else if (g.status === 'finished') showFinished();
@@ -105,6 +106,20 @@ function showLobby() {
         <p class="big">Du är med!</p>
         <p class="muted" style="font-size:1.2rem">Leta upp ditt namn på skärmen.<br>Julquizet startar snart …</p>
         <div class="spinner" style="margin-top:20px"></div>
+      </div>
+    </div>`;
+}
+
+function showIntro() {
+  const q = game.current_question;
+  app.innerHTML = `
+    <div class="play">
+      ${topbar(`<span>Fråga ${q.index + 1}/${game.total_questions}</span><span></span>`)}
+      <div class="qtext ${sizeClass(q.text)}">${nl2br(q.text)}</div>
+      ${q.image_url ? `<img class="qimg" src="${esc(q.image_url)}" alt="">` : ''}
+      <div class="result" style="flex:1">
+        <div class="spinner"></div>
+        <p class="muted" style="font-size:1.1rem;margin:6px 0 0">Gör dig redo – svarsalternativen kommer snart! 🎄</p>
       </div>
     </div>`;
 }
